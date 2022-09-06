@@ -1,0 +1,56 @@
+[
+    {
+        "type": "terrain",
+        "terrain": "plain",
+        "x": 8,
+        "y": 25
+    },
+    {
+        "type": "terrain",
+        "terrain": "plain",
+        "x": 9,
+        "y": 25
+    },
+    {
+        "type": "terrain",
+        "terrain": "plain",
+        "x": 10,
+        "y": 25
+    },
+    {
+        "type": "terrain",
+        "terrain": "plain",
+        "x": 8,
+        "y": 26
+    },
+    {
+        "type": "terrain",
+        "terrain": "wall",
+        "x": 9,
+        "y": 26
+    },
+    {
+        "type": "terrain",
+        "terrain": "wall",
+        "x": 10,
+        "y": 26
+    },
+    {
+        "type": "terrain",
+        "terrain": "wall",
+        "x": 8,
+        "y": 27
+    },
+    {
+        "type": "terrain",
+        "terrain": "wall",
+        "x": 9,
+        "y": 27
+    },
+    {
+        "type": "terrain",
+        "terrain": "wall",
+        "x": 10,
+        "y": 27
+    }
+]
