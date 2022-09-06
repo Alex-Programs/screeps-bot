@@ -22,10 +22,7 @@ export class ConstructionOverwatch {
   placeTower(room: Room, spawnPos: RoomPosition) {
     const towerCount = room.find(FIND_MY_STRUCTURES, {filter: {structureType: STRUCTURE_TOWER}}).length
 
-    // TEMPORARY, TO RUN WHILE I SLEEP
-    if (room.controller && room.controller.level > 2) {
-      room.createConstructionSite(14, 24, STRUCTURE_TOWER)
-    }
+    // TODO make it auto place
   }
 
   placeRoads(room: Room, sources: Source[], spawnPos: RoomPosition) {

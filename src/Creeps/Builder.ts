@@ -12,7 +12,7 @@ export class Builder extends Worker {
 
                 if (target) {
                     if (creep.build(target) === ERR_NOT_IN_RANGE) {
-                        creep.moveTo(target, { visualizePathStyle: { stroke: "#ff7a33" }, reusePath: 5 })
+                        creep.moveTo(target, { visualizePathStyle: { stroke: "#ff7a33" }, reusePath: 1 })
                     }
                 }
             } else {
@@ -20,7 +20,7 @@ export class Builder extends Worker {
 
                 if (controller) {
                     if (creep.upgradeController(controller) == ERR_NOT_IN_RANGE) {
-                        creep.moveTo(controller, { visualizePathStyle: { stroke: "#ff7a33" }, reusePath: 5})
+                        creep.moveTo(controller, { visualizePathStyle: { stroke: "#ff7a33" }, reusePath: 1 })
                     }
                 }
             }
