@@ -1,8 +1,8 @@
 import { Direction } from "../Types/Direction"
 
-export function getAccessibleFaces(position: RoomPosition): RoomPosition[] {
-    const terrainAround = Game.rooms[position.roomName].lookForAtArea(LOOK_TERRAIN, position.y - 1, position.x - 1, position.y + 1, position.x +1, true)
-    
+export function getAccessibleFaces(position: RoomPosition, range = 1): RoomPosition[] {
+    const terrainAround = Game.rooms[position.roomName].lookForAtArea(LOOK_TERRAIN, position.y - range, position.x - range, position.y + range, position.x + range, true)
+
     let output: RoomPosition[] = []
 
     for (let i in terrainAround) {

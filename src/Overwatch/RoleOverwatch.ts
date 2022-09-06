@@ -16,6 +16,16 @@ export class RoleOverwatch {
       Game.spawns["Spawn1"].spawnCreep(this.creepGenerator(spawnEnergy, "Distributor"), "Distributor " + Math.random() + ":" + Game.time, { memory: { role: "Distributor" } });
     }
 
+    if (distributors.length > 1) {
+      const amountOfBuildersDisabled = Game.spawns["Spawn1"].room.find(FIND_CREEPS).filter((creep) => {creep.memory.role == "Distributor" && creep.memory.disableBuilders == true}).length
+
+      const amountOfBuildersDisabledRequired = Math.ceil(distributors.length / 2)
+
+      if (amountOfBuildersDisabledRequired > amountOfBuildersDisabled) {
+        Game.spawns["Spawn1"].spawnCreep(this.creepGenerator(spawnEnergy, "Distributor"), "Distributor " + Math.random() + ":" + Game.time, { memory: { role: "Distributor", disableBuilders: true } });
+      }
+    }
+
     // Could be timered
     // Go over each source
     for (const i in sources) {
@@ -42,7 +52,7 @@ export class RoleOverwatch {
 
       const faceCount: number = getAccessibleFaces(source.pos).length
 
-      if (harvesterCount < faceCount && workUnitCount * 1.5 < 10) {
+      if (harvesterCount < faceCount && workUnitCount * 2 < 10) {
         if (spawnEnergy >= 300) {
           Game.spawns["Spawn1"].spawnCreep(this.creepGenerator(spawnEnergy, "Harvester"), "Harvester" + Math.random() + ":" + Game.time, { memory: { role: "Harvester", targetID: source.id}})
         }
@@ -50,7 +60,7 @@ export class RoleOverwatch {
     }
 
     if (harvesters.length >= 2) {
-      let buildersTarget = harvesters.length / 2
+      let buildersTarget = sources.length * 3
 
       if (buildersTarget < 2) {
         buildersTarget = 2;
@@ -81,7 +91,7 @@ export class RoleOverwatch {
         }
 
         body.push(MOVE)
-        body.push(MOVE)
+        //body.push(MOVE)
 
         return body;
 

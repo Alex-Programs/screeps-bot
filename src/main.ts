@@ -2,7 +2,8 @@ import {ErrorMapper} from "utils/ErrorMapper";
 import {Harvester} from "./Creeps/Harvester";
 import {RoleOverwatch} from "./Overwatch/RoleOverwatch";
 import {Distributor} from "./Creeps/Distributor";
-import { Builder } from "Creeps/Builder";
+import {Builder} from "Creeps/Builder";
+import {ConstructionOverwatch} from "./Overwatch/ConstructionOverwatch"
 
 declare global {
   /*
@@ -17,6 +18,7 @@ declare global {
   interface CreepMemory {
     role: string;
     targetID?: Id<any>;
+    disableBuilders?: boolean;
   }
 
   interface Player {
@@ -24,6 +26,13 @@ declare global {
     hostile: boolean;
     permanentlyHostile: boolean;
     wasLastHostile: number;
+  }
+
+  interface RoomMemory {
+    time: number;
+    havePlannedRoads: boolean;
+    lastControllerRefresh: number;
+    assignedEmergencyRepair: string;
   }
 
   // Syntax for adding proprties to `global` (ex "global.log")
@@ -36,6 +45,7 @@ declare global {
 
 // When compiling TS to JS and bundling with rollup, the line numbers and file names in error messages change
 // This utility uses source maps to get the line numbers and file names of the original, TS source code
+
 export const loop = ErrorMapper.wrapLoop(() => {
   // Automatically delete memory of missing creeps
   for (const name in Memory.creeps) {
@@ -44,11 +54,30 @@ export const loop = ErrorMapper.wrapLoop(() => {
     }
   }
 
+  const room: Room = Game.spawns["Spawn1"].room;
+  if (room.memory.time == null || room.memory.time == undefined) {
+    room.memory.time = 0;
+  } else {
+    room.memory.time++;
+  }
+
+  const time = room.memory.time;
+
   // TODO defensive overwatch that populates the factions list based on going over screeps in the room and checking they're not damaging/harvesting - unless they're invaders. Use event log
 
   // TODO fighter overwatch that intelligently assigns fighters to targets
 
-  // TODO construction overwatch that intelligently creates construction sites, roads to waypoints
+  // TODO construction overwatch that intelligently creates extensions, roads to waypoints, turrets, storages
+
+  // TODO Distributor overwatch that prevents energy expiration
+
+  // TODO builder overwatch that always keeps the controller going
+
+  if (time % 5 == 0) {
+    new ConstructionOverwatch(room)
+  }
+
+  // TODO refactor to be room-agnostic
 
   const roleOverwatch: RoleOverwatch = new RoleOverwatch();
 

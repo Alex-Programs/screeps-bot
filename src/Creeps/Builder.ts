@@ -2,7 +2,7 @@ import { Worker } from "./Worker"
 
 export class Builder extends Worker {
     role = "Builder"
-    
+
     constructor(creep: Creep) {
         super()
         if (this.retrieveEnergy(creep)) {
@@ -11,7 +11,7 @@ export class Builder extends Worker {
                 const target = creep.pos.findClosestByRange(FIND_CONSTRUCTION_SITES)
 
                 if (target) {
-                    if (creep.build(target) == ERR_NOT_IN_RANGE) {
+                    if (creep.build(target) === ERR_NOT_IN_RANGE) {
                         creep.moveTo(target, { visualizePathStyle: { stroke: "#ff7a33" }, reusePath: 5 })
                     }
                 }

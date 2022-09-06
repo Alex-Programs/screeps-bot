@@ -10,7 +10,9 @@ export class Distributor extends Worker {
       if (this.refillExtension(creep)) {
         if (this.refillTowers(creep)) {
           if (this.refillStorage(creep)) {
-            this.refillBuilder(creep)
+            if (!creep.memory.disableBuilders) {
+              this.refillBuilder(creep)
+            }
           }
         }
       }

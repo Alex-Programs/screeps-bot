@@ -1,4 +1,3 @@
-// I know this looks very similar to Solon's code. While I have read his code, I'm not copying, and I'm planning on a quite different architecture in many ways.
 export class Harvester {
   role = "Harvester";
 
