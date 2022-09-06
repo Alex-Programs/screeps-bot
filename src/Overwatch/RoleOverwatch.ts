@@ -11,7 +11,7 @@ export class RoleOverwatch {
     const builders: Creep[] = _.filter(Game.creeps, creep => creep.memory.role == "Builder")
 
     // Every harvester should have a distributor
-    if (distributors.length < harvesters.length) {
+    if (distributors.length < harvesters.length * 3) {
       // MULTITODO
       Game.spawns["Spawn1"].spawnCreep(this.creepGenerator(spawnEnergy, "Distributor"), "Distributor " + Math.random() + ":" + Game.time, { memory: { role: "Distributor" } });
     }
@@ -19,7 +19,7 @@ export class RoleOverwatch {
     if (distributors.length > 1) {
       const amountOfBuildersDisabled = Game.spawns["Spawn1"].room.find(FIND_CREEPS).filter((creep) => {creep.memory.role == "Distributor" && creep.memory.disableBuilders == true}).length
 
-      const amountOfBuildersDisabledRequired = Math.ceil(distributors.length / 2)
+      const amountOfBuildersDisabledRequired = Math.ceil(distributors.length / 3)
 
       if (amountOfBuildersDisabledRequired > amountOfBuildersDisabled) {
         Game.spawns["Spawn1"].spawnCreep(this.creepGenerator(spawnEnergy, "Distributor"), "Distributor " + Math.random() + ":" + Game.time, { memory: { role: "Distributor", disableBuilders: true } });
@@ -60,7 +60,7 @@ export class RoleOverwatch {
     }
 
     if (harvesters.length >= 2) {
-      let buildersTarget = sources.length * 3
+      let buildersTarget = sources.length * 6
 
       if (buildersTarget < 2) {
         buildersTarget = 2;
