@@ -11,18 +11,24 @@ export class RoleOverwatch {
     const builders: Creep[] = _.filter(Game.creeps, creep => creep.memory.role == "Builder")
 
     // Every harvester should have a distributor
-    if (distributors.length < harvesters.length * 3) {
+    if (distributors.length < harvesters.length * 2) {
       // MULTITODO
       Game.spawns["Spawn1"].spawnCreep(this.creepGenerator(spawnEnergy, "Distributor"), "Distributor " + Math.random() + ":" + Game.time, { memory: { role: "Distributor" } });
     }
 
-    if (distributors.length > 1) {
-      const amountOfBuildersDisabled = Game.spawns["Spawn1"].room.find(FIND_CREEPS).filter((creep) => {creep.memory.role == "Distributor" && creep.memory.disableBuilders == true}).length
+    if (distributors.length > 4) {
+      let amountOfBuildersDisabled = 0
+
+      for (const i in distributors) {
+        if (distributors[i].memory.disableBuilders == true) {
+          amountOfBuildersDisabled++;
+        }
+      }
 
       const amountOfBuildersDisabledRequired = Math.ceil(distributors.length / 3)
 
       if (amountOfBuildersDisabledRequired > amountOfBuildersDisabled) {
-        Game.spawns["Spawn1"].spawnCreep(this.creepGenerator(spawnEnergy, "Distributor"), "Distributor " + Math.random() + ":" + Game.time, { memory: { role: "Distributor", disableBuilders: true } });
+        Game.spawns["Spawn1"].spawnCreep(this.creepGenerator(spawnEnergy, "Distributor"), "Distributor - Builders Only -" + Math.random() + ":" + Game.time, { memory: { role: "Distributor", disableBuilders: true } });
       }
     }
 
@@ -68,11 +74,10 @@ export class RoleOverwatch {
 
       if (builders.length < buildersTarget) {
         //MULTITODO
+        console.log("Making builder")
         Game.spawns["Spawn1"].spawnCreep(this.creepGenerator(spawnEnergy, "Builder"), "Builder" + Math.random() + ":" + Game.time, { memory: { role: "Builder"}})
       }
     }
-
-    // TODO handle fighters, towers
   }
 
   creepGenerator(energy: number, name: string): BodyPartConstant[] {
@@ -81,7 +86,7 @@ export class RoleOverwatch {
 
     switch (name) {
       case "Harvester":
-        budget = Math.floor((energy - 100) / 100)
+        budget = Math.floor((energy - 20) / 100)
 
         // limit to 10
         budget = budget > 10 ? 10 : budget
@@ -100,18 +105,20 @@ export class RoleOverwatch {
 
         for (let i = 0; i < budget; i++) {
           body.push(CARRY)
-          body.push(MOVE)
         }
+
+        body.push(MOVE)
 
         return body;
 
       case "Builder":
-        budget = Math.floor(energy / 200)
+        budget = Math.floor((energy-100) / 100)
         for (let i = 0; i < budget; i++) {
           body.push(WORK)
-          body.push(MOVE)
-          body.push(CARRY)
         }
+
+        body.push(CARRY)
+        body.push(MOVE)
 
         return body;
 

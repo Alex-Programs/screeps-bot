@@ -14,11 +14,23 @@ export class ConstructionOverwatch {
     if (room.controller && room.controller.level > 1) {
       this.placeRoads(room, sources, spawnPos)
     }
+
+    this.placeTower(room, spawnPos)
+  }
+
+  // Will only create one at a time, using the time-limiting to slightly slow things down
+  placeTower(room: Room, spawnPos: RoomPosition) {
+    const towerCount = room.find(FIND_MY_STRUCTURES, {filter: {structureType: STRUCTURE_TOWER}}).length
+
+    // TEMPORARY, TO RUN WHILE I SLEEP
+    if (room.controller && room.controller.level > 2) {
+      room.createConstructionSite(14, 24, STRUCTURE_TOWER)
+    }
   }
 
   placeRoads(room: Room, sources: Source[], spawnPos: RoomPosition) {
     if (room.memory.havePlannedRoads) {
-      console.log("Skipping road creation for " + room.name + " due to already having it done and it being very CPU-intensive")
+      // console.log("Skipping road creation for " + room.name + " due to already having it done and it being very CPU-intensive")
       return
     }
     const roadNodes: RoomPosition[] = [];

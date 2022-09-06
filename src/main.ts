@@ -73,13 +73,17 @@ export const loop = ErrorMapper.wrapLoop(() => {
 
   // TODO builder overwatch that always keeps the controller going
 
+  // TODO builder type that only works on roads but is more effective
+
+  // TODO refactor to be room-agnostic
+
   if (time % 5 == 0) {
     new ConstructionOverwatch(room)
   }
 
-  // TODO refactor to be room-agnostic
-
-  const roleOverwatch: RoleOverwatch = new RoleOverwatch();
+  if (time % 5 == 0) {
+    const roleOverwatch: RoleOverwatch = new RoleOverwatch();
+  }
 
   // Necessary ones to start with: Harvester and Distributor. MULTITODO
   for (let creepName in Game.creeps) {
