@@ -1,4 +1,5 @@
 import {getAccessibleFaces} from "../utils/getAccessibleFaces";
+import {spawn} from "child_process";
 
 export class ConstructionOverwatch {
   totalExtensions: number = 0;
@@ -6,9 +7,12 @@ export class ConstructionOverwatch {
   totalTowers: number = 0;
 
   constructor(room: Room) {
-    this.setTotalBuildableBuildings(room)
+    // Only run if at total capacity, to give roleoverwatch a chance
+    if (room.energyAvailable !== room.energyCapacityAvailable) {
+      return;
+    }
 
-    // TODO only continue if at max energy so RoleOverwatch can go first
+    this.setTotalBuildableBuildings(room)
 
     let sources: Source[] = room.find(FIND_SOURCES);
     let spawnPos: RoomPosition = room.find(FIND_MY_SPAWNS)[0].pos;
@@ -17,59 +21,35 @@ export class ConstructionOverwatch {
       this.placeRoads(room, sources, spawnPos)
     }
 
-    this.placeTower(room, spawnPos)
+    if (room.controller && room.controller.level > 1 && room.memory.time % 10 == 0) {
+      this.renewRoads(room);
+    }
 
-    // TODO place extensions
+    // TODO place extensions, towers
   }
 
-  // Will only create one at a time, using the time-limiting to slightly slow things down
-  placeTower(room: Room, spawnPos: RoomPosition) {
-    const towerCount = room.find(FIND_MY_STRUCTURES, {filter: {structureType: STRUCTURE_TOWER}}).length
+  renewRoads(room: Room) {
+    for (let i = 0; i < room.memory.roadConstructionSites.length; i++) {
+      const position: RoomPosition = room.memory.roadConstructionSites[i];
 
-    // TODO make it auto place
+      if (room.lookForAt(LOOK_STRUCTURES, position.x, position.y).length === 0 && room.lookForAt(LOOK_CONSTRUCTION_SITES, position.x, position.y).length === 0) {
+        room.createConstructionSite(position.x, position.y, STRUCTURE_ROAD);
+      }
+    }
+  }
+
+  removeSites(room: Room) {
+    const sites: ConstructionSite[] = room.find(FIND_CONSTRUCTION_SITES)
+    for (const site of sites) {
+      site.remove();
+    }
   }
 
   placeRoads(room: Room, sources: Source[], spawnPos: RoomPosition) {
     if (room.memory.havePlannedRoads) {
-      // console.log("Skipping road creation for " + room.name + " due to already having it done and it being very CPU-intensive")
       return
     }
-    const roadNodes: RoomPosition[] = [];
-
-    for (let i = 0; i < sources.length; i++) {
-      roadNodes.push(sources[i].pos)
-
-      // I'm not taking any chances. Make paths to every visible face, to avoid gaps. Oh, and range 2, so you can go around them
-      const faces = getAccessibleFaces(sources[i].pos, 2)
-      for (const faceName in faces) {
-        const face = faces[faceName]
-
-        roadNodes.push(new RoomPosition(face.x, face.y, room.name))
-      }
-    }
-
-    roadNodes.push(spawnPos)
-
-    if (room.controller) {
-      roadNodes.push(room.controller?.pos)
-    }
-
-    for (const i in roadNodes) {
-      for (const j in roadNodes) {
-        const roadPath = roadNodes[i].findPathTo(roadNodes[j], {
-          maxOps: 400,
-          ignoreCreeps: true,
-          plainCost: 5,
-          swampCost: 10
-        })
-
-        for (let i = 0; i < roadPath.length; i++) {
-          if (!room.lookForAt(LOOK_TERRAIN, roadPath[i].x, roadPath[i].y).includes("wall")) {
-            room.createConstructionSite(roadPath[i].x, roadPath[i].y, STRUCTURE_ROAD)
-          }
-        }
-      }
-    }
+    const roadConstructionSites: RoomPosition[] = [];
 
     // Create box of roads around spawn
     const spawnBound: any = room.lookForAtArea(LOOK_TERRAIN,
@@ -84,11 +64,52 @@ export class ConstructionOverwatch {
       if (spawnBound[i].terrain.includes("plain") || spawnBound[i].terrain.includes("swamp")) {
         if (room.lookForAt(LOOK_STRUCTURES, spawnBound[i].x, spawnBound[i].y).length === 0) {
           room.createConstructionSite(spawnBound[i].x, spawnBound[i].y, STRUCTURE_ROAD);
+          roadConstructionSites.push(new RoomPosition(spawnBound[i].x, spawnBound[i].y, room.name))
+        }
+      }
+    }
+
+    const roadNodes: RoomPosition[] = [];
+
+    for (let i = 0; i < sources.length; i++) {
+      roadNodes.push(sources[i].pos)
+
+      // I'm not taking any chances. Make paths to every visible face, to avoid gaps. Oh, and range 2, so you can go around them
+      const faces = getAccessibleFaces(sources[i].pos, 2)
+      for (const faceName in faces) {
+        const face = faces[faceName]
+
+        room.createConstructionSite(face.x, face.y, STRUCTURE_ROAD);
+        roadConstructionSites.push(new RoomPosition(face.x, face.y, room.name))
+      }
+    }
+
+    roadNodes.push(spawnPos)
+
+    if (room.controller) {
+      roadNodes.push(room.controller.pos)
+    }
+
+    for (const i in roadNodes) {
+      for (const j in roadNodes) {
+        const roadPath = roadNodes[i].findPathTo(roadNodes[j], {
+          maxOps: 400,
+          ignoreCreeps: true,
+          plainCost: 5,
+          swampCost: 10,
+        })
+
+        for (let i = 0; i < roadPath.length; i++) {
+          if (!room.lookForAt(LOOK_TERRAIN, roadPath[i].x, roadPath[i].y).includes("wall")) {
+            room.createConstructionSite(roadPath[i].x, roadPath[i].y, STRUCTURE_ROAD)
+            roadConstructionSites.push(new RoomPosition(roadPath[i].x, roadPath[i].y, room.name))
+          }
         }
       }
     }
 
     room.memory.havePlannedRoads = true;
+    room.memory.roadConstructionSites = roadConstructionSites;
   }
 
   setTotalBuildableBuildings(room: Room): void {

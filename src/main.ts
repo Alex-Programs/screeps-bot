@@ -33,6 +33,7 @@ declare global {
     havePlannedRoads: boolean;
     lastControllerRefresh: number;
     assignedEmergencyRepair: string;
+    roadConstructionSites: RoomPosition[];
   }
 
   // Syntax for adding proprties to `global` (ex "global.log")
@@ -77,12 +78,17 @@ export const loop = ErrorMapper.wrapLoop(() => {
 
   // TODO refactor to be room-agnostic
 
-  if (time % 5 == 0) {
-    new ConstructionOverwatch(room)
+  // TODO rewrite roleOverwatch to make it dependent on need:
+  //  Energy reserves not being used AND opportunity to fix, more harvesters. If a harvester is moving there at the moment, don't make another.
+  //  Lots of construction, lots of builders.
+  //  Lots of creeps needing to manually get things, lots of distributors.
+
+  if (time % 2 === 0) {
+    const roleOverwatch: RoleOverwatch = new RoleOverwatch(room);
   }
 
-  if (time % 5 == 0) {
-    const roleOverwatch: RoleOverwatch = new RoleOverwatch();
+  if (time % 2 === 0) {
+    new ConstructionOverwatch(room)
   }
 
   // Necessary ones to start with: Harvester and Distributor. MULTITODO

@@ -1,28 +1,28 @@
 import { getAccessibleFaces } from "utils/GetAccessibleFaces";
 
 export class RoleOverwatch {
-  constructor() {
-    // Collect data. "Borrowed" from Solon's code. MULTITODO
-    const spawnEnergy = Game.spawns["Spawn1"].room.energyAvailable;
-    const maxEnergy = Game.spawns["Spawn1"].room.energyCapacityAvailable;
+  constructor(room: Room) {
+    // Collect data. "Borrowed" from Solon's code.
+    const spawnEnergy = room.energyAvailable;
+    const maxEnergy = room.energyCapacityAvailable;
 
-    const sources: Source[] = Game.spawns["Spawn1"].room.find(FIND_SOURCES)
+    const sources: Source[] = room.find(FIND_SOURCES)
 
-    const harvesters: Creep[] = _.filter(Game.creeps, creep => creep.memory.role == "Harvester")
-    const distributors: Creep[] = _.filter(Game.creeps, creep => creep.memory.role == "Distributor")
-    const builders: Creep[] = _.filter(Game.creeps, creep => creep.memory.role == "Builder")
+    const harvesters: Creep[] = _.filter(room.find(FIND_MY_CREEPS), creep => creep.memory.role == "Harvester")
+    const distributors: Creep[] = _.filter(room.find(FIND_MY_CREEPS), creep => creep.memory.role == "Distributor")
+    const builders: Creep[] = _.filter(room.find(FIND_MY_CREEPS), creep => creep.memory.role == "Builder")
+    const spawn = room.find(FIND_MY_SPAWNS)[0]
 
-    // Every harvester should have a distributor
-    if (distributors.length < harvesters.length * 2) {
-      // MULTITODO
-      Game.spawns["Spawn1"].spawnCreep(this.creepGenerator(spawnEnergy, "Distributor"), "Distributor " + Math.random() + ":" + Game.time, { memory: { role: "Distributor" } });
+    // Every harvester should have a distributor. TODO variable amounts based on average time between spawn and harvesters
+    if (distributors.length < (harvesters.length * 2) + (builders.length / 2)) {
+      spawn.spawnCreep(this.creepGenerator(spawnEnergy, "Distributor"), "Distributor " + Math.random() + ":" + Game.time, { memory: { role: "Distributor" } });
     }
 
-    if (distributors.length > 4) {
+    if (distributors.length > 4 && room.controller && room.controller.level > 2) {
       let amountOfBuildersDisabled = 0
 
       for (const i in distributors) {
-        if (distributors[i].memory.disableBuilders == true) {
+        if (distributors[i].memory.disableBuilders) {
           amountOfBuildersDisabled++;
         }
       }
@@ -30,11 +30,11 @@ export class RoleOverwatch {
       const amountOfBuildersDisabledRequired = Math.floor(distributors.length / 3)
 
       if (amountOfBuildersDisabledRequired > amountOfBuildersDisabled) {
-        Game.spawns["Spawn1"].spawnCreep(this.creepGenerator(spawnEnergy, "Distributor"), "Distributor - Builders Only -" + Math.random() + ":" + Game.time, { memory: { role: "Distributor", disableBuilders: true } });
+        spawn.spawnCreep(this.creepGenerator(spawnEnergy, "Distributor"), "Distributor - No Builders -" + Math.random() + ":" + Game.time, { memory: { role: "Distributor", disableBuilders: true } });
       }
     }
 
-    // Could be timered
+    // TODO make this based on how quickly the source is depleted
     // Go over each source
     for (const i in sources) {
       const source = sources[i]
@@ -62,21 +62,18 @@ export class RoleOverwatch {
 
       if (harvesterCount < faceCount && workUnitCount * 2 < 10) {
         if (spawnEnergy >= 300) {
-          Game.spawns["Spawn1"].spawnCreep(this.creepGenerator(spawnEnergy, "Harvester"), "Harvester" + Math.random() + ":" + Game.time, { memory: { role: "Harvester", targetID: source.id}})
+          spawn.spawnCreep(this.creepGenerator(spawnEnergy, "Harvester"), "Harvester" + Math.random() + ":" + Game.time, { memory: { role: "Harvester", targetID: source.id}})
         }
       }
     }
 
-    if (harvesters.length >= 2) {
-      let buildersTarget = sources.length * 3
-
-      if (buildersTarget < 2) {
-        buildersTarget = 2;
-      }
+    if (harvesters.length >= 2 && room.controller) {
+      // TODO modify this based on if the existing builders are actually getting energy
+      const buildersTarget = Math.ceil(sources.length * room.controller.level * 2)
 
       if (builders.length < buildersTarget) {
         console.log("Making builder")
-        Game.spawns["Spawn1"].spawnCreep(this.creepGenerator(spawnEnergy, "Builder"), "Builder" + Math.random() + ":" + Game.time, { memory: { role: "Builder"}})
+        spawn.spawnCreep(this.creepGenerator(spawnEnergy, "Builder"), "Builder" + Math.random() + ":" + Game.time, { memory: { role: "Builder"}})
       }
     }
   }
