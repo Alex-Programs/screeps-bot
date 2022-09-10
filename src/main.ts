@@ -113,6 +113,18 @@ export const loop = ErrorMapper.wrapLoop(() => {
 
   // TODO once room agnostic, make an expand() function
 
+  /* Changes I'm going to make:
+      Make a distributor overwatch that collects energy sources and energy requirements
+      Finds energy requirements, finds the closest source to it, and then allocates however many distributors are necessary, keeping distance in mind
+      Builders are not given resources by this system. They're handled by a new worker overwatch, which is a simple spread-assignment system based on
+      max and min values per item.
+
+      Now, this is going to involve significant rewriting. For the refactor to be easier to think about, I'm renaming things. Distributors -> Haulers,
+      builders -> workers.
+
+      After that, I'm making things room-agnostic and an expand() function
+   */
+
   const roleOverwatch: RoleOverwatch = new RoleOverwatch(room);
 
   new ConstructionOverwatch(room)
