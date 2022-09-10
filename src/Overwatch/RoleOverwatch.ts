@@ -1,6 +1,5 @@
 import {getAccessibleFaces} from "utils/GetAccessibleFaces";
 import {Harvester} from "../Creeps/Harvester";
-import {drop} from "lodash";
 
 export class RoleOverwatch {
   constructor(room: Room) {
