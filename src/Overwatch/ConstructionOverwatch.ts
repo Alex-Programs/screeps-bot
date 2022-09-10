@@ -1,5 +1,4 @@
 import {getAccessibleFaces} from "../utils/getAccessibleFaces";
-import {spawn} from "child_process";
 
 export class ConstructionOverwatch {
   totalExtensions: number = 0;
@@ -25,7 +24,7 @@ export class ConstructionOverwatch {
       this.renewRoads(room);
     }
 
-    // TODO place extensions, towers
+    // TODO place extensions, towers, storages
   }
 
   renewRoads(room: Room) {

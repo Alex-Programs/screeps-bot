@@ -11,6 +11,9 @@ export class Harvester {
       if (creep.harvest(source) == ERR_NOT_IN_RANGE) {
         // Move to it
         creep.moveTo(source.pos.x, source.pos.y, { visualizePathStyle: { stroke: "#ff7a33" }})
+        creep.memory.movingTowardsTarget = true;
+      } else {
+        creep.memory.movingTowardsTarget = false;
       }
     }
   }

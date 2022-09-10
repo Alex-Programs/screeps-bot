@@ -4,6 +4,7 @@ import {RoleOverwatch} from "./Overwatch/RoleOverwatch";
 import {Distributor} from "./Creeps/Distributor";
 import {Builder} from "Creeps/Builder";
 import {ConstructionOverwatch} from "./Overwatch/ConstructionOverwatch"
+import {TowerOverwatch} from "./Overwatch/TowerOverwatch";
 
 declare global {
   /*
@@ -19,6 +20,9 @@ declare global {
     role: string;
     targetID?: Id<any>;
     disableBuilders?: boolean;
+    movingTowardsTarget?: boolean;
+    controllerOnly?: boolean;
+    isIdle?: boolean;
   }
 
   interface Player {
@@ -32,8 +36,24 @@ declare global {
     time: number;
     havePlannedRoads: boolean;
     lastControllerRefresh: number;
-    assignedEmergencyRepair: string;
     roadConstructionSites: RoomPosition[];
+    sourceMemories: SourceMemory[];
+    idleBuildingTicks: number[];
+    lastBuilderSpawnTime: number;
+    builderTravellingTicks: BuilderTravellingStorage[];
+    lastGeneralDistributorSpawnTime: number;
+    lastSpecialDistributorSpawnTime: number;
+  }
+
+  interface BuilderTravellingStorage {
+    totalBuilders: number;
+    buildersTravelling: number;
+  }
+
+  interface SourceMemory {
+    srcID: string;
+    lastEnergy: number;
+    avgEnergyDrop: number;
   }
 
   // Syntax for adding proprties to `global` (ex "global.log")
@@ -62,34 +82,42 @@ export const loop = ErrorMapper.wrapLoop(() => {
     room.memory.time++;
   }
 
+  if (!room.memory.sourceMemories) {
+    room.memory.sourceMemories = [];
+  }
+
+  if (!room.memory.idleBuildingTicks) {
+    room.memory.idleBuildingTicks = [];
+  }
+
+  if (!room.memory.builderTravellingTicks) {
+    room.memory.builderTravellingTicks = []
+  }
+
+  if (!room.memory.lastSpecialDistributorSpawnTime) {
+    room.memory.lastSpecialDistributorSpawnTime = 0;
+    room.memory.lastGeneralDistributorSpawnTime = 0;
+    room.memory.lastBuilderSpawnTime = 0;
+    room.memory.lastControllerRefresh = room.memory.time;
+  }
+
   const time = room.memory.time;
 
   // TODO defensive overwatch that populates the factions list based on going over screeps in the room and checking they're not damaging/harvesting - unless they're invaders. Use event log
 
-  // TODO fighter overwatch that intelligently assigns fighters to targets
+  // TODO distributor overwatch that assigns tasks intelligently
 
   // TODO construction overwatch that intelligently creates extensions, roads to waypoints, turrets, storages
 
-  // TODO Distributor overwatch that prevents energy expiration
-
-  // TODO builder overwatch that always keeps the controller going
-
-  // TODO builder type that only works on roads but is more effective
-
   // TODO refactor to be room-agnostic
 
-  // TODO rewrite roleOverwatch to make it dependent on need:
-  //  Energy reserves not being used AND opportunity to fix, more harvesters. If a harvester is moving there at the moment, don't make another.
-  //  Lots of construction, lots of builders.
-  //  Lots of creeps needing to manually get things, lots of distributors.
+  // TODO once room agnostic, make an expand() function
 
-  if (time % 2 === 0) {
-    const roleOverwatch: RoleOverwatch = new RoleOverwatch(room);
-  }
+  const roleOverwatch: RoleOverwatch = new RoleOverwatch(room);
 
-  if (time % 2 === 0) {
-    new ConstructionOverwatch(room)
-  }
+  new ConstructionOverwatch(room)
+
+  new TowerOverwatch(room);
 
   // Necessary ones to start with: Harvester and Distributor. MULTITODO
   for (let creepName in Game.creeps) {
