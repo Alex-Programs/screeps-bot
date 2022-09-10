@@ -4,6 +4,8 @@ export class RoleOverwatch {
   constructor() {
     // Collect data. "Borrowed" from Solon's code. MULTITODO
     const spawnEnergy = Game.spawns["Spawn1"].room.energyAvailable;
+    const maxEnergy = Game.spawns["Spawn1"].room.energyCapacityAvailable;
+
     const sources: Source[] = Game.spawns["Spawn1"].room.find(FIND_SOURCES)
 
     const harvesters: Creep[] = _.filter(Game.creeps, creep => creep.memory.role == "Harvester")
@@ -25,7 +27,7 @@ export class RoleOverwatch {
         }
       }
 
-      const amountOfBuildersDisabledRequired = Math.ceil(distributors.length / 3)
+      const amountOfBuildersDisabledRequired = Math.floor(distributors.length / 3)
 
       if (amountOfBuildersDisabledRequired > amountOfBuildersDisabled) {
         Game.spawns["Spawn1"].spawnCreep(this.creepGenerator(spawnEnergy, "Distributor"), "Distributor - Builders Only -" + Math.random() + ":" + Game.time, { memory: { role: "Distributor", disableBuilders: true } });
@@ -66,14 +68,13 @@ export class RoleOverwatch {
     }
 
     if (harvesters.length >= 2) {
-      let buildersTarget = sources.length * 6
+      let buildersTarget = sources.length * 3
 
       if (buildersTarget < 2) {
         buildersTarget = 2;
       }
 
       if (builders.length < buildersTarget) {
-        //MULTITODO
         console.log("Making builder")
         Game.spawns["Spawn1"].spawnCreep(this.creepGenerator(spawnEnergy, "Builder"), "Builder" + Math.random() + ":" + Game.time, { memory: { role: "Builder"}})
       }
@@ -81,44 +82,49 @@ export class RoleOverwatch {
   }
 
   creepGenerator(energy: number, name: string): BodyPartConstant[] {
-    let body: BodyPartConstant[] = [];
     let budget: number;
+    const body: BodyPartConstant[] = [];
 
     switch (name) {
       case "Harvester":
-        budget = Math.floor((energy - 20) / 100)
-
-        // limit to 10
-        budget = budget > 10 ? 10 : budget
-
-        for (let i = 0; i < budget; i++) {
-          body.push(WORK)
+        if (energy > 749) {
+          return [WORK, WORK,
+            WORK, WORK,
+            WORK, WORK,
+            MOVE, MOVE,
+            MOVE]
         }
 
-        body.push(MOVE)
-        //body.push(MOVE)
+        // lvl 2. Takes 500 energy, needs roads
+        if (energy > 499) {
+          return [WORK, WORK,
+                  WORK, WORK,
+                  MOVE,MOVE]
+        }
 
-        return body;
+        // Base. Takes 250 energy, needs roads
+        if (energy > 299) {
+          return [WORK, WORK, MOVE]
+        }
 
       case "Distributor":
+        // Doesn't need roads
         budget = Math.floor(energy / 100)
-
         for (let i = 0; i < budget; i++) {
+          body.push(MOVE)
           body.push(CARRY)
         }
-
-        body.push(MOVE)
 
         return body;
 
       case "Builder":
-        budget = Math.floor((energy-100) / 100)
-        for (let i = 0; i < budget; i++) {
-          body.push(WORK)
-        }
+        budget = Math.floor(energy / 200)
 
-        body.push(CARRY)
-        body.push(MOVE)
+        for (let i = 0; i < budget; i++) {
+          body.push(MOVE)
+          body.push(WORK)
+          body.push(CARRY)
+        }
 
         return body;
 

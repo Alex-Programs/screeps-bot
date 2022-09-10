@@ -8,6 +8,8 @@ export class ConstructionOverwatch {
   constructor(room: Room) {
     this.setTotalBuildableBuildings(room)
 
+    // TODO only continue if at max energy so RoleOverwatch can go first
+
     let sources: Source[] = room.find(FIND_SOURCES);
     let spawnPos: RoomPosition = room.find(FIND_MY_SPAWNS)[0].pos;
 
@@ -16,6 +18,8 @@ export class ConstructionOverwatch {
     }
 
     this.placeTower(room, spawnPos)
+
+    // TODO place extensions
   }
 
   // Will only create one at a time, using the time-limiting to slightly slow things down
