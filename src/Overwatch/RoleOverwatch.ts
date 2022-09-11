@@ -20,28 +20,52 @@ export class RoleOverwatch {
     //  Lots of creeps needing to manually get things, lots of distributors.
     //  Controller not being maintained, controller-specific builders
 
+    this.getGroundEnergy(room)
+
     this.balanceHarvesters(room, sources, harvesters, spawn, spawnEnergy)
+
+    if (spawn.spawning) {
+      return;
+    }
 
     this.balanceControllerBuilders(room, spawn, spawnEnergy)
 
-    this.balanceBuilders(room, spawn, spawnEnergy, builders, sources)
+    if (spawn.spawning) {
+      return;
+    }
 
-    //this.balanceDistributors(room, spawn, spawnEnergy, builders, distributors)
+    this.balanceSpecificDistributors(room, spawn, spawnEnergy, distributors, harvesters)
 
-    //this.balanceSpecificDistributors(room, spawn, spawnEnergy)
+    if (spawn.spawning) {
+      return;
+    }
+
+    this.balanceBuilders(room, spawn, spawnEnergy, builders, sources);
+
+    if (spawn.spawning) {
+      return;
+    }
+
+    this.balanceDistributors(room, spawn, spawnEnergy, builders, distributors)
   }
 
   private getGroundEnergy(room: Room): number {
     // Get how much energy is on the ground
+    let total = 0;
 
+    const dropped = room.find(FIND_DROPPED_RESOURCES)
+    for (let i = 0; i < dropped.length; i++) {
+      const drop = dropped[i]
+
+      if (drop.resourceType == "energy") {
+        total = total + drop.amount
+      }
+    }
+    return total;
   }
 
-  private balanceSpecificDistributors(room: Room, spawn: StructureSpawn, spawnEnergy: number) {
+  private balanceSpecificDistributors(room: Room, spawn: StructureSpawn, spawnEnergy: number, distributors: Creep[], harvesters: Creep[]) {
     if (room.memory.lastSpecialDistributorSpawnTime + 30 > room.memory.time) {
-      return;
-    }
-
-    if (room.memory.time % 2 === 1) {
       return;
     }
 
@@ -64,10 +88,18 @@ export class RoleOverwatch {
 
     const avgPercentage = 100 * (totalPercentage / (towers.length + extensions.length + storages.length))
 
-    if (avgPercentage < 60) {
+    // TODO make this not NAN
+    console.log(avgPercentage + " is avg percentage")
+
+    const minimumCase = distributors.length < 3 && harvesters.length > 2
+
+    console.log(minimumCase + " is special minimum case")
+
+    if (avgPercentage < 60 || minimumCase) {
       const totalDropped = this.getGroundEnergy(room);
 
-      if (totalDropped > 500) {
+      if (totalDropped > 500 || minimumCase) {
+        console.log("Attempting to make specific distributor")
         const [success, creep] = this.creepGenerator(spawnEnergy, "Distributor")
 
         if (success && !spawn.spawning) {
@@ -78,7 +110,7 @@ export class RoleOverwatch {
               disableBuilders: true,
             }
           })
-          console.log("Making a distributor because too much on-the-ground energy is not being used")
+          console.log("Making a specific distributor because too much on-the-ground energy is not being used or below minimum")
           room.memory.lastSpecialDistributorSpawnTime = room.memory.time;
         }
       }
@@ -165,7 +197,7 @@ export class RoleOverwatch {
       //Get energy on the ground
       const totalDropped = this.getGroundEnergy(room);
 
-      if (percentage <= 30 || (room.controller && room.controller.level * sources.length * 3 < builders.length) || totalDropped > 1000) {
+      if (percentage <= 30 || (room.controller && room.controller.level * sources.length < builders.length) || totalDropped > 2000) {
         // Make a builder
         const [success, creep] = this.creepGenerator(spawnEnergy, "Builder")
         if (success && !spawn.spawning) {
@@ -182,12 +214,7 @@ export class RoleOverwatch {
     }
   }
 
-  private balanceControllerBuilders(room: Room, spawn: StructureSpawn, spawnEnergy: number) {
-    // Time check for speedup.
-    if (room.memory.time % 2 !== 0) {
-      return;
-    }
-
+  private balanceControllerBuilders(room: Room, spawn: StructureSpawn, spawnEnergy: number): void {
     // Check there actually is one
     if (!room.controller) {
       return;
@@ -222,7 +249,7 @@ export class RoleOverwatch {
   }
 
   // TODO also make it regen immediately when one dies
-  private balanceHarvesters(room: Room, sources: Source[], harvesters: Creep[], spawn: StructureSpawn, spawnEnergy: number): void {
+  private balanceHarvesters(room: Room, sources: Source[], harvesters: Creep[], spawn: StructureSpawn, spawnEnergy: number) {
     function getSourceMemory(source: Source): SourceMemory | null {
       for (let i = 0; i < room.memory.sourceMemories.length; i++) {
         if (room.memory.sourceMemories[i].srcID === source.id) {
@@ -248,7 +275,11 @@ export class RoleOverwatch {
         continue
       }
 
-      const energyDrop = Math.abs(memory.lastEnergy - source.energy)
+      let energyDrop = Math.abs(memory.lastEnergy - source.energy)
+
+      if (energyDrop > 2000) {
+        energyDrop = 0;
+      }
 
       if (memory.avgEnergyDrop === -1) {
         memory.avgEnergyDrop = energyDrop;
@@ -266,7 +297,8 @@ export class RoleOverwatch {
       }
 
       // Is mining rate below optimal? (Optimal is 3000/300, aka 10). Also a time requirement
-      if (memory.avgEnergyDrop < 10 && room.memory.time % 5 === 0) {
+      console.log(memory.avgEnergyDrop)
+      if (memory.avgEnergyDrop < 10) {
         // Is there already a harvester going there? Also get count assigned to it
         let alreadyOne = false;
         let harvesterCount = 0;
@@ -286,7 +318,9 @@ export class RoleOverwatch {
           // Would a new one even have somewhere to go?
           const faceCount: number = getAccessibleFaces(source.pos).length
           if (harvesterCount < faceCount) {
+            console.log("Attempting to make harvester")
             const [success, creep] = this.creepGenerator(spawnEnergy, "Harvester")
+            console.log(success)
 
             if (success && !spawn.spawning) {
               spawn.spawnCreep(creep, "Harvester" + Game.time, {
@@ -296,7 +330,6 @@ export class RoleOverwatch {
                 }
               })
               console.log("Making a harvester because the current setup is suboptimal")
-              return
             }
           }
         }

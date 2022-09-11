@@ -114,8 +114,10 @@ export const loop = ErrorMapper.wrapLoop(() => {
   // TODO once room agnostic, make an expand() function
 
   /* Changes I'm going to make:
+      Make the ground energy function work
+      Fix it having poor priorities in screep creation.
       Make a distributor overwatch that collects energy sources and energy requirements
-      Finds energy requirements, finds the closest source to it, and then allocates however many distributors are necessary, keeping distance in mind
+      Finds energy requirements, finds the best source for it, and then allocates however many distributors are necessary, keeping distance in mind
       Builders are not given resources by this system. They're handled by a new worker overwatch, which is a simple spread-assignment system based on
       max and min values per item.
 

@@ -16,11 +16,11 @@ export class ConstructionOverwatch {
     let sources: Source[] = room.find(FIND_SOURCES);
     let spawnPos: RoomPosition = room.find(FIND_MY_SPAWNS)[0].pos;
 
-    if (room.controller && room.controller.level > 1) {
+    if (room.controller && room.controller.level > 2) {
       this.placeRoads(room, sources, spawnPos)
     }
 
-    if (room.controller && room.controller.level > 1 && room.memory.time % 10 == 0) {
+    if (room.controller && room.controller.level > 2 && room.memory.time % 10 === 0) {
       this.renewRoads(room);
     }
 
